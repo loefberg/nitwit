@@ -2,6 +2,7 @@ package com.github.loefberg.nitwit.ds;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,13 +32,8 @@ public class DataStore {
     }
 
     public String put(byte[] content) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        out.write(String.format("blob %s\0", content.length).getBytes(StandardCharsets.UTF_8));
-        out.write(content);
-        out.close();
-        byte[] fileContent = out.toByteArray();
-        String hash = hash(fileContent);
-        deflate(fileContent, createObjectPath(hash));
+        String hash = hash(content);
+        deflate(content, createObjectPath(hash));
         return hash;
     }
 
@@ -46,6 +42,11 @@ public class DataStore {
         byte[] uncompressed = inflate(objectFile);
         int idx = indexOf(uncompressed, 0);
         String header = new String(uncompressed, 0, idx, StandardCharsets.UTF_8);
+        // Header: tree 612
+        // Header: commit 231
+
+        System.out.println("Header: " + header);
+
         // TODO: handle header
         // TODO: validate hash
         return Arrays.copyOfRange(uncompressed, idx + 1, uncompressed.length);
@@ -100,4 +101,5 @@ public class DataStore {
         }
         return -1;
     }
+
 }

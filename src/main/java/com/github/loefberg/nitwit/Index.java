@@ -5,8 +5,14 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+
+import static com.github.loefberg.nitwit.ByteBufferUtils.getEpochSecond;
+import static com.github.loefberg.nitwit.ByteBufferUtils.getUnsignedInt;
 
 public class Index {
+    private static final int MAGIC = ('D' << 24) | ('I' << 16) | ('R' << 8) | ('C' << 0);
+
     public static void main(String[] args) throws IOException {
         Path file = Paths.get("D:\\Bitbucket\\modeling-tool\\.git\\index");
         byte[] content = Files.readAllBytes(file);
@@ -14,10 +20,11 @@ public class Index {
 
         // 4-byte signature:
         // The signature is { 'D', 'I', 'R', 'C' } (stands for "dircache")
-        System.out.println((char)buf.get());
-        System.out.println((char)buf.get());
-        System.out.println((char)buf.get());
-        System.out.println((char)buf.get());
+        int signature = buf.getInt();
+        if(signature != MAGIC) {
+            throw new RuntimeException("Invalid index file format, magic signature wrong: " + signature);
+        }
+
 
         // 4-byte version number:
         // The current possible versions are 2, 3 and 4.
@@ -28,13 +35,13 @@ public class Index {
             throw new RuntimeException("Unsupported index version=" + version);
         }
 
-        // TODO: read unsigned
-        int numberOfEntries = buf.getInt();
+        // 32-bit number of index entries.
+        long numberOfEntries = getUnsignedInt(buf);
         System.out.println("entries=" + numberOfEntries);
 
         // entries
 
-        for(int i = 0; i < numberOfEntries; i++) {
+        for(long i = 0; i < numberOfEntries; i++) {
             //  Index entries are sorted in ascending order on the name field,
             //  interpreted as a string of unsigned bytes (i.e. memcmp() order, no
             //  localization, no special casing of directory separator '/'). Entries
@@ -44,8 +51,7 @@ public class Index {
             //    this is stat(2) data
             //  32-bit ctime nanosecond fractions
             //    this is stat(2) data
-
-            long ctime = buf.getLong();
+            Instant ctime = getEpochSecond(buf);
 
             //  32-bit mtime seconds, the last time a file's data changed
             //    this is stat(2) data
@@ -53,43 +59,48 @@ public class Index {
             //  32-bit mtime nanosecond fractions
             //    this is stat(2) data
 
-            long mtime = buf.getLong();
+            Instant mtime = getEpochSecond(buf);
 
             //  32-bit dev
             //    this is stat(2) data
-            int dev = buf.getInt();
+            long dev = getUnsignedInt(buf);
 
             //
             //  32-bit ino
             //    this is stat(2) data
-
-            int ino = buf.getInt();
+            long ino = getUnsignedInt(buf);
 
             //  32-bit mode, split into (high to low bits)
-            int mode = buf.getInt();
+            long mode = getUnsignedInt(buf);
+            System.out.println(Integer.toBinaryString((int)mode));
+            // mode is split up like this:
             //
             //    4-bit object type
             //      valid values in binary are 1000 (regular file), 1010 (symbolic link)
             //      and 1110 (gitlink)
-            //
+            ObjectType objectType = ObjectType.fromValue((byte)((mode & 0xf000) >> 12));
+
             //    3-bit unused
             //
+            // 1ff
             //    9-bit unix permission. Only 0755 and 0644 are valid for regular files.
             //    Symbolic links and gitlinks have value 0 in this field.
+            short permissions = (short)(mode & 0x1ff);
+
 
             //  32-bit uid
             //    this is stat(2) data
-            int uid = buf.getInt();
+            long uid = getUnsignedInt(buf);
 
             //
             //  32-bit gid
             //    this is stat(2) data
-            int gid = buf.getInt();
+            long gid = getUnsignedInt(buf);
 
             //
             //  32-bit file size
             //    This is the on-disk size from stat(2), truncated to 32-bit.
-            int size = buf.getInt();
+            long size = getUnsignedInt(buf);
 
 
             //  160-bit SHA-1 for the represented object
@@ -130,7 +141,7 @@ public class Index {
                 buf.get();
             }
 
-            System.out.println(entryPathName);
+            // System.out.println(entryPathName);
         }
     }
 }

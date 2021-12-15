@@ -1,6 +1,7 @@
 package com.github.loefberg.nitwit;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 
 public class ByteBufferUtils {
 
@@ -66,4 +67,11 @@ public class ByteBufferUtils {
         bb.putInt(position, (int) (value & 0xffffffffL));
     }
 
+    // -----------------------------------------------------------------
+
+    public static Instant getEpochSecond(ByteBuffer buf) {
+        long seconds = getUnsignedInt(buf);
+        long nanos = getUnsignedInt(buf);
+        return Instant.ofEpochSecond(seconds, nanos);
+    }
 }

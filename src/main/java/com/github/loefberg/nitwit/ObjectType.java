@@ -3,6 +3,9 @@ package com.github.loefberg.nitwit;
 public enum ObjectType {
     REGULAR_FILE(0b01000),
     SYMBOLIC_LINK(0b1010),
+    /**
+     * A submodule. Points to a sha1 of the submodule repo.
+     */
     GIT_LINK(0b1110);
 
     private final int value;

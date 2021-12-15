@@ -1,4 +1,4 @@
-package com.github.loefberg.nitwit;
+package com.github.loefberg.nitwit.util;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;

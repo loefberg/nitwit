@@ -45,6 +45,8 @@ public class DataStore {
         // Header: tree 612
         // Header: commit 231
 
+        // TODO: nitwit git repo has a6efbc856e924ee5ae364d5aa6cbbec6d4baf61f as a tree
+
         System.out.println("Header: " + header);
 
         // TODO: handle header

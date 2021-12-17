@@ -94,7 +94,7 @@ public class Index {
         /** Within a POSIX system, this is the inode (index node); the file's "serial number". */
         private final long ino;
 
-        private final ObjectType objectType;
+        private final IndexFileType objectType;
 
         /**
          * Unix permission. Only 0755 and 0644 are valid for regular files.
@@ -188,7 +188,7 @@ public class Index {
             //    4-bit object type
             //      valid values in binary are 1000 (regular file), 1010 (symbolic link)
             //      and 1110 (git link)
-            this.objectType = ObjectType.fromValue((byte)((mode & 0xf000) >> 12));
+            this.objectType = IndexFileType.fromValue((byte)((mode & 0xf000) >> 12));
 
             //    3-bit unused
             //

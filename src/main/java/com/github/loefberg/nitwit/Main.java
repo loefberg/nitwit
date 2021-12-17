@@ -1,6 +1,9 @@
 package com.github.loefberg.nitwit;
 
 import com.github.loefberg.nitwit.ds.DataStore;
+import com.github.loefberg.nitwit.ds.Tree;
+import com.github.loefberg.nitwit.ds.Tree.TreeEntry;
+import com.github.loefberg.nitwit.ds.TreeFileType;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -9,16 +12,14 @@ import java.nio.file.Paths;
 public class Main {
     public static void main(String[] args) throws IOException {
         Path gitDir = Paths.get("D:\\Bitbucket\\modeling-tool\\.git");
-        DataStore store = new DataStore(gitDir);
-        // byte[] value = store.get("fcbd1a074aae48efa72976015b0ac016c4056dc0"); // commit
-        byte[] value = store.get("67fd1bbb4a5db04aa886cfb65cbca2d19f0e7fae"); // tree
-
-        int idx = 0;
-        while(value[idx] != 0 && idx < value.length) {
-            idx++;
+        DataStore ds = new DataStore(gitDir);
+        Tree tree = ds.getTree(new ObjectID("de49e2008450cb78443ead2c547683406990b08b"));
+        for(TreeEntry entry: tree.getEntries()) {
+            System.out.println(entry);
+            if(entry.type() == TreeFileType.DIRECTORY) {
+                ds.getTree(entry.id());
+            }
         }
-
-        System.out.println(">");
-        System.out.println(new String(value, 0, idx));
+        // 040000 tree 4921cb7ea1e8c3326853409ec53cee891e61e671    main
     }
 }

@@ -1,5 +1,6 @@
 package com.github.loefberg.nitwit;
 
+import com.github.loefberg.nitwit.NativeGit.ExecutionResult;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,11 +14,9 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
@@ -28,17 +27,22 @@ class MainTest {
     private final NativeGit ngit = NativeGit.newInstance();
     private Path nativeWorkingDir;
     private Path implWorkingDir;
+    private Path tmpDir;
+
+
 
     @BeforeEach
     public void initWorkspace() throws Exception {
-        nativeWorkingDir = Files.createTempDirectory("nitwit-test-native-");
-        implWorkingDir = Files.createTempDirectory("nitwit-test-impl-");
+        tmpDir = Files.createTempDirectory("nitwit-test-");
+        nativeWorkingDir = tmpDir.resolve("native");
+        Files.createDirectory(nativeWorkingDir);
+        implWorkingDir = tmpDir.resolve("impl");
+        Files.createDirectory(implWorkingDir);
     }
 
     @AfterEach
     public void cleanupWorkspace() throws Exception {
-        FileUtils.deleteDirectory(nativeWorkingDir.toFile());
-        FileUtils.deleteDirectory(implWorkingDir.toFile());
+        FileUtils.deleteDirectory(tmpDir.toFile());
     }
 
     @Test
@@ -51,8 +55,28 @@ class MainTest {
     }
 
     @Test
-    public void bar() {
-        System.out.println("bar");
+    public void testHashObject() throws Exception {
+        // echo 'test content' | git hash-object -w --stdin
+        // git hash-object -w test.txt
+
+        Path file = Files.createTempFile("testHashObject", ".tmp");
+        Files.writeString(file, "Hello, world!");
+
+        Nitwit nitwit = new Nitwit();
+        Workspace ws = nitwit.createWorkspace(implWorkingDir);
+        String actualFileHash = ws.createObject(file);
+
+        ngit.run(nativeWorkingDir, "init");
+        ExecutionResult result = ngit.run(nativeWorkingDir, "hash-object", "-w", file.toString());
+
+        assertEquals(result.stdout.trim(), actualFileHash, "file hash does not match");
+
+        assertSameDirectory();
+    }
+
+    @Test
+    public void testCatFile() {
+        // git cat-file -p d670460b4b4aece5915caf5c68d12f560a9fe3e4
     }
 
     private void assertSameDirectory() throws Exception {
@@ -91,7 +115,7 @@ class MainTest {
         if(!different.isEmpty()) {
             message.append("Files in our directory that is not the same as in native git's:\n");
             message.append("\t- ");
-            message.append(extra.stream().map(Path::toString).collect(joining("\n\t- ")));
+            message.append(different.stream().map(Path::toString).collect(joining("\n\t- ")));
         }
 
         if(!message.isEmpty()) {
@@ -123,6 +147,7 @@ class MainTest {
 
             @Override
             public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                result.put(root.relativize(dir), "");
                 return FileVisitResult.CONTINUE;
             }
         });

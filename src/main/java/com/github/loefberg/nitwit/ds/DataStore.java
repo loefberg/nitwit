@@ -4,7 +4,9 @@ import com.github.loefberg.nitwit.ObjectID;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,6 +14,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.function.Function;
+import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -140,9 +143,16 @@ public class DataStore {
         return parent.resolve(hash.substring(2));
     }
 
+    /**
+     * What seems to be the default compression level is 1. But this is probably dependent on
+     * git setting core.compression.
+     */
+    private static final int GIT_DEFAULT_COMPRESSION = 1;
+
     private static void deflate(byte[] content, Path file) throws IOException {
-        try(var output = new DeflaterOutputStream(Files.newOutputStream(file))) {
-            output.write(content);
+        Deflater deflate = new Deflater(GIT_DEFAULT_COMPRESSION);
+        try(DeflaterOutputStream out = new DeflaterOutputStream(Files.newOutputStream(file), deflate)) {
+            out.write(content);
         }
     }
 

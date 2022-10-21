@@ -13,6 +13,8 @@ public class Main {
     public static void main(String[] args) throws IOException {
         Path gitDir = Paths.get("D:\\Bitbucket\\modeling-tool\\.git");
         DataStore ds = new DataStore(gitDir);
+
+        System.out.println(ds.getType(new ObjectID("de49e2008450cb78443ead2c547683406990b08b")));
         Tree tree = ds.getTree(new ObjectID("de49e2008450cb78443ead2c547683406990b08b"));
         for(TreeEntry entry: tree.getEntries()) {
             System.out.println(entry);

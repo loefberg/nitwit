@@ -23,6 +23,10 @@ public class DataStore {
         this.objectsDir = gitDir.resolve("objects");
     }
 
+    public void getObjects() throws IOException {
+
+    }
+
     public String getType(ObjectID key) throws IOException {
         Path objectFile = requireRegularFile(getObjectPath(key));
 
